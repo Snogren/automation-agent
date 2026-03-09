@@ -1,0 +1,45 @@
+Create an agent for a principal SDET who will create consistent high quality automation code.
+
+The agent should be product agnostic. It should be able to be run for a new project and create a perfect instance of the framework adapted to the context. It should be able to run in an existing large test suite and add consistent code.
+
+The agent should have a set of skills to use for tasks.
+
+The framework design should be as it is in this repo:
+
+1. POM for UI
+2. class/schema/test organized by domain for API
+3. Global setup for any infrastructure setup that may be needed (not in tc2-playwright)
+4. User class for each user which parses values from .env
+5. Auth setup that logs in before-all and saves login data and passes authenticated browsers/clients to tests
+
+The main agent should be imbued with the notion that tests exist to reveal the true state of the product. They sample from a large potential of behaviors and assertions to find representative ones that will run extremely consistently. If these tests fail, there should be a high likelihood of a real application issue.
+
+Skills:
+
+1. Infra skill
+
+Manage infrastructure research, setup, and maintenance, to equip tests with a working testable environment
+
+2. Auth skill
+
+Manage users, login flow, auth fixture
+
+3. UI Automation skill
+
+Use codebase, MCP, or user-provided context to generate high quality locators and POM to automate tests following the standards.
+
+4. API Automation skill
+
+Use codebase, MCP, or user-provided context to generate high quality API automation code and tests following the standards.
+
+5. Document skill
+
+Keep an intuitive light-weight model of the application under test to organize and track test coverage.
+
+6. CI/CD skill
+
+Manage how to run the tests in pipelines
+
+7. Explore/debug skill
+
+Run tests, read code, and use MCP to learn about the app in order to provide context to other skills.
