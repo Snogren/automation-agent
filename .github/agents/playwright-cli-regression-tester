@@ -1,0 +1,119 @@
+---
+name: playwright-regression-test
+description: Execute comprehensive regression tests against appName using browser automation. Execute one scenario at a time, updating the related Jira task with the results of each scenario.
+---
+
+# Regression Testing Skill
+
+## Overview
+
+This skill should be used for regression testing appName. 
+
+It provides a **Behavior-Driven Development (BDD)** regression testing framework with Gherkin-style `.yaml` scenario files. 
+
+## Architecture
+
+```
+regression-test/
+  SKILL.md                          ← You are here. Orchestrator & framework docs.
+  domains/
+    {domain}.yaml                   ← BDD test scenarios for the domain
+    {domain}-map.md                 ← Domain feature map (code refs, behaviors, testing guidance)
+```
+
+## Execution summary
+1. User requests a regression test run for one or more domains.
+2. You create a Jira Task for the run and Sub-tasks for each domain.
+3. For each domain, you execute the scenarios in its YAML file one at a time.
+4. You will use the playwright-cli and perform each scenario *one at a time*, updating Jira between each scenario.
+5. After all scenarios complete, you produce a test report and transition Jira tasks accordingly.
+
+# Execution Flow
+
+## Inputs
+
+Get the one or more domains to test from the user.
+
+- **Must use** #playwright-cli for browser automation
+- **Reference** #playwright-tc2-auth for logging in
+- **must read** #playwright-tc2-tips for efficiently navigating the site
+
+## Setup Jira tickets
+
+Use the `#manage-jira` skill to create a Jira **Task** for the regression run and Sub-tasks for each domain being tested.
+
+## Complete this loop for each domain
+
+Complete all scenarios one at a time, adding a comment to the Jira Subtask after each scenario with the results using the template provided below.
+
+```markdown
+## {✅ or ❌} {Scenario Name}
+
+**Feature:** {Feature name from YAML}
+**Result:** PASS | FAIL (step N)
+**Duration:** ~{seconds}s
+
+### Steps Executed
+| # | Step (from YAML) | Action Taken | Data Used | Result |
+|---|-----------------|--------------|-----------|--------|
+| 1 | Given I am on account search | Navigated sidebar → Accounts for Acme Health | Org: Acme Health (provider) | ✅ |
+| 2 | When I execute an advanced search combining two criteria with AND | Opened advanced search, added Status=Active AND Amount>500 | Status: Active, Payment Amount: >500.00 | ✅ |
+| 3 | Then results should match both criteria | Verified 23 rows. Spot-checked rows 1, 8, 15 | Row 1: $1,204.50 / Row 8: $782.00 | ✅ |
+
+### Notes
+- {Any observations, slowness, UI quirks, or cleanup actions}
+- {If failed: describe what went wrong and link to screenshot}
+```
+
+**Why this matters:** The receipt proves each step was actually executed (not skipped), records the specific data used for verification (making failures reproducible), and surfaces observations that might not be bugs but are worth tracking."
+
+### Guidelines
+
+#### Data Management
+
+This is a test environment with test data. You can, and must, create, modify, and locate data as needed to execute the scenarios.
+
+#### Verification Depth
+Every `Then` step MUST verify actual content, not just element existence:
+- ❌ SHALLOW: "Verify the Add Note button exists"
+- ✅ DEEP: "Click Add Note, fill text, submit, verify note appears in notes list with correct text and timestamp"
+
+#### Error Handling
+- If a step fails, take a screenshot and record the failure
+- Continue to the next **scenario** (skip remaining steps in the failed scenario)
+- A failed `Background` step fails all scenarios in that feature
+
+#### Timing
+- After navigation: wait for network idle or the expected element to appear
+- After form submission: wait for the success toast/response or error message
+- After data updates: there may be a delay since this is an event driven system, so poll for up to 15 seconds for the expected result to appear
+
+### Environment & Credentials
+
+If you get logged out, credentials are in `C:\Code\repo\.env` using the pattern `TC2_{ENV}_{ROLE}_{FIELD}`.
+
+Also see the #playwright-tc2-login skill for details on the login flow and credentials.
+
+Use dev qa-admin.
+
+Base URL: ``
+
+### Connectivity Check
+
+After opening the base URL, if the page title or body contains a **CloudFront 403 error** (e.g. "403 ERROR", "The request could not be satisfied", "Request blocked"), **stop the entire regression run immediately**. Do not attempt any scenarios. Tell the user:
+
+> ❌ **Cannot reach the Dev environment.** The CloudFront CDN is returning a 403. Please connect to the VPN and try again.
+
+Then exit — do not proceed with any further steps or Jira updates.
+
+## Report Results
+After all scenarios complete, produce a structured test report with:
+- Total scenarios: passed / failed / skipped
+- Failed scenario details with screenshots
+- Bugs to file (with reproduction steps from the failed scenario)
+
+Transition the domain Subtask:
+- **All pass** → transition to Done
+- **Any failure** → leave In Progress, add a summary comment listing failures
+
+Transition the run Task to Done only when all domain Subtasks are Done.
